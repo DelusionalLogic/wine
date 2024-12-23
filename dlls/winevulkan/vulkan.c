@@ -628,8 +628,11 @@ static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_de
     unsigned int i, extra_count = 0, extensions_count = src->enabledExtensionCount;
     char **extra_xr_extensions;
     unsigned int count, o = 0, append_xr = 0;
+    VkBaseOutStructure *header;
 
     *dst = *src;
+    if ((header = (VkBaseOutStructure *)dst->pNext) && header->sType == VK_STRUCTURE_TYPE_CREATE_INFO_WINE_DEVICE_CALLBACK)
+        dst->pNext = header->pNext;
 
     /* Should be filtered out by loader as ICDs don't support layers. */
     dst->enabledLayerCount = 0;
@@ -964,6 +967,10 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     unsigned int queue_count, i;
     VkResult res;
 
+    PFN_native_vkCreateDevice native_create_device = NULL;
+    void *native_create_device_context = NULL;
+    VkCreateInfoWineDeviceCallback *callback;
+
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
@@ -987,11 +994,25 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
 
     object->phys_dev = phys_dev;
 
+    if ((callback = (VkCreateInfoWineDeviceCallback *)create_info->pNext)
+            && callback->sType == VK_STRUCTURE_TYPE_CREATE_INFO_WINE_DEVICE_CALLBACK)
+    {
+        native_create_device = callback->native_create_callback;
+        native_create_device_context = callback->context;
+    }
+
     init_conversion_context(&ctx);
     res = wine_vk_device_convert_create_info(phys_dev, &ctx, create_info, &create_info_host);
     if (res == VK_SUCCESS)
-        res = instance->funcs.p_vkCreateDevice(phys_dev->host_physical_device, &create_info_host,
-                                               NULL /* allocator */, &object->host_device);
+    {
+        if (native_create_device)
+            res = native_create_device(phys_dev->host_physical_device,
+                    &create_info_host, NULL /* allocator */, &object->host_device,
+                    vk_funcs->p_vkGetInstanceProcAddr, native_create_device_context);
+        else
+            res = instance->funcs.p_vkCreateDevice(phys_dev->host_physical_device,
+                    &create_info_host, NULL /* allocator */, &object->host_device);
+    }
     free_conversion_context(&ctx);
     if (res != VK_SUCCESS)
     {

@@ -17022,6 +17022,25 @@ typedef VkResult (VKAPI_PTR *PFN_vkWaitSemaphoresKHR)(VkDevice, const VkSemaphor
 typedef VkResult (VKAPI_PTR *PFN_vkWriteAccelerationStructuresPropertiesKHR)(VkDevice, uint32_t, const VkAccelerationStructureKHR *, VkQueryType, size_t, void *, size_t);
 typedef VkResult (VKAPI_PTR *PFN_vkWriteMicromapsPropertiesEXT)(VkDevice, uint32_t, const VkMicromapEXT *, VkQueryType, size_t, void *, size_t);
 
+typedef VkResult (WINAPI *PFN_native_vkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *,
+                                                       void * (*)(VkInstance, const char *), void *);
+typedef VkResult (WINAPI *PFN_native_vkCreateDevice)(VkPhysicalDevice, const VkDeviceCreateInfo *, const VkAllocationCallbacks *, VkDevice *,
+                                                     void * (*)(VkInstance, const char *), void *);
+
+typedef struct VkCreateInfoWineDeviceCallback {
+    VkStructureType             sType;
+    const void*                 pNext;
+    PFN_native_vkCreateDevice   native_create_callback;
+    void*                       context;
+} VkCreateInfoWineDeviceCallback;
+#define VK_STRUCTURE_TYPE_CREATE_INFO_WINE_DEVICE_CALLBACK 2125312001
+typedef struct VkCreateInfoWineInstanceCallback {
+    VkStructureType             sType;
+    const void*                 pNext;
+    PFN_native_vkCreateInstance native_create_callback;
+    void*                       context;
+} VkCreateInfoWineInstanceCallback;
+#define VK_STRUCTURE_TYPE_CREATE_INFO_WINE_INSTANCE_CALLBACK 2125312002
 #ifndef VK_NO_PROTOTYPES
 VkResult VKAPI_CALL vkAcquireNextImage2KHR(VkDevice device, const VkAcquireNextImageInfoKHR *pAcquireInfo, uint32_t *pImageIndex);
 VkResult VKAPI_CALL vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *pImageIndex);
