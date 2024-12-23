@@ -114,6 +114,14 @@ typedef struct VkExportMemoryWin32HandleInfoKHR32
     LPCWSTR name;
 } VkExportMemoryWin32HandleInfoKHR32;
 
+typedef struct VkImportMemoryFdInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkExternalMemoryHandleTypeFlagBits handleType;
+    int fd;
+} VkImportMemoryFdInfoKHR32;
+
 typedef struct VkMemoryAllocateFlagsInfo32
 {
     VkStructureType sType;
@@ -6095,6 +6103,14 @@ typedef struct VkVideoEncodeSessionParametersFeedbackInfoKHR32
     VkBool32 hasOverrides;
 } VkVideoEncodeSessionParametersFeedbackInfoKHR32;
 
+typedef struct VkFenceGetFdInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkFence DECLSPEC_ALIGN(8) fence;
+    VkExternalFenceHandleTypeFlagBits handleType;
+} VkFenceGetFdInfoKHR32;
+
 typedef struct VkGeneratedCommandsMemoryRequirementsInfoEXT32
 {
     VkStructureType sType;
@@ -6197,6 +6213,21 @@ typedef struct VkGetLatencyMarkerInfoNV32
     uint32_t timingCount;
     PTR32 pTimings;
 } VkGetLatencyMarkerInfoNV32;
+
+typedef struct VkMemoryGetFdInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+    VkExternalMemoryHandleTypeFlagBits handleType;
+} VkMemoryGetFdInfoKHR32;
+
+typedef struct VkMemoryFdPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t memoryTypeBits;
+} VkMemoryFdPropertiesKHR32;
 
 typedef struct VkMemoryHostPointerPropertiesEXT32
 {
@@ -8083,6 +8114,14 @@ typedef struct VkSamplerCaptureDescriptorDataInfoEXT32
     VkSampler DECLSPEC_ALIGN(8) sampler;
 } VkSamplerCaptureDescriptorDataInfoEXT32;
 
+typedef struct VkSemaphoreGetFdInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+    VkExternalSemaphoreHandleTypeFlagBits handleType;
+} VkSemaphoreGetFdInfoKHR32;
+
 typedef struct VkShaderModuleIdentifierEXT32
 {
     VkStructureType sType;
@@ -8098,6 +8137,26 @@ typedef struct VkVideoSessionMemoryRequirementsKHR32
     uint32_t memoryBindIndex;
     VkMemoryRequirements32 DECLSPEC_ALIGN(8) memoryRequirements;
 } VkVideoSessionMemoryRequirementsKHR32;
+
+typedef struct VkImportFenceFdInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkFence DECLSPEC_ALIGN(8) fence;
+    VkFenceImportFlags flags;
+    VkExternalFenceHandleTypeFlagBits handleType;
+    int fd;
+} VkImportFenceFdInfoKHR32;
+
+typedef struct VkImportSemaphoreFdInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+    VkSemaphoreImportFlags flags;
+    VkExternalSemaphoreHandleTypeFlagBits handleType;
+    int fd;
+} VkImportSemaphoreFdInfoKHR32;
 
 typedef struct VkInitializePerformanceApiInfoINTEL32
 {
@@ -8732,6 +8791,18 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
             out_ext->pAttributes = UlongToPtr(in_ext->pAttributes);
             out_ext->dwAccess = in_ext->dwAccess;
             out_ext->name = in_ext->name;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR:
+        {
+            VkImportMemoryFdInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImportMemoryFdInfoKHR32 *in_ext = (const VkImportMemoryFdInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->handleType = in_ext->handleType;
+            out_ext->fd = in_ext->fd;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -24929,6 +25000,18 @@ static inline void convert_VkVideoEncodeSessionParametersFeedbackInfoKHR_host_to
     }
 }
 
+static inline void convert_VkFenceGetFdInfoKHR_win32_to_host(const VkFenceGetFdInfoKHR32 *in, VkFenceGetFdInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->fence = in->fence;
+    out->handleType = in->handleType;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 static inline VkTilePropertiesQCOM *convert_VkTilePropertiesQCOM_array_win32_to_host(struct conversion_context *ctx, const VkTilePropertiesQCOM32 *in, uint32_t count)
 {
     VkTilePropertiesQCOM *out;
@@ -25210,6 +25293,47 @@ static inline void convert_VkGetLatencyMarkerInfoNV_host_to_win32(const VkGetLat
 
     out->timingCount = in->timingCount;
     convert_VkLatencyTimingsFrameReportNV_array_host_to_win32(in->pTimings, (VkLatencyTimingsFrameReportNV32 *)UlongToPtr(out->pTimings), in->timingCount);
+}
+
+#ifdef _WIN64
+static inline void convert_VkMemoryGetFdInfoKHR_win64_to_host(const VkMemoryGetFdInfoKHR *in, VkMemoryGetFdInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->memory = wine_device_memory_from_handle(in->memory)->host_memory;
+    out->handleType = in->handleType;
+}
+#endif /* _WIN64 */
+
+static inline void convert_VkMemoryGetFdInfoKHR_win32_to_host(const VkMemoryGetFdInfoKHR32 *in, VkMemoryGetFdInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->memory = wine_device_memory_from_handle(in->memory)->host_memory;
+    out->handleType = in->handleType;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkMemoryFdPropertiesKHR_win32_to_host(const VkMemoryFdPropertiesKHR32 *in, VkMemoryFdPropertiesKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkMemoryFdPropertiesKHR_host_to_win32(const VkMemoryFdPropertiesKHR *in, VkMemoryFdPropertiesKHR32 *out)
+{
+    if (!in) return;
+
+    out->memoryTypeBits = in->memoryTypeBits;
 }
 
 static inline void convert_VkMemoryHostPointerPropertiesEXT_win32_to_host(const VkMemoryHostPointerPropertiesEXT32 *in, VkMemoryHostPointerPropertiesEXT *out)
@@ -33883,6 +34007,18 @@ static inline void convert_VkSamplerCaptureDescriptorDataInfoEXT_win32_to_host(c
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_VkSemaphoreGetFdInfoKHR_win32_to_host(const VkSemaphoreGetFdInfoKHR32 *in, VkSemaphoreGetFdInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->semaphore = in->semaphore;
+    out->handleType = in->handleType;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 static inline void convert_VkShaderModuleIdentifierEXT_win32_to_host(const VkShaderModuleIdentifierEXT32 *in, VkShaderModuleIdentifierEXT *out)
 {
     if (!in) return;
@@ -33945,6 +34081,34 @@ static inline void convert_VkVideoSessionMemoryRequirementsKHR_array_host_to_win
     {
         convert_VkVideoSessionMemoryRequirementsKHR_host_to_win32(&in[i], &out[i]);
     }
+}
+
+static inline void convert_VkImportFenceFdInfoKHR_win32_to_host(const VkImportFenceFdInfoKHR32 *in, VkImportFenceFdInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->fence = in->fence;
+    out->flags = in->flags;
+    out->handleType = in->handleType;
+    out->fd = in->fd;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkImportSemaphoreFdInfoKHR_win32_to_host(const VkImportSemaphoreFdInfoKHR32 *in, VkImportSemaphoreFdInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->semaphore = in->semaphore;
+    out->flags = in->flags;
+    out->handleType = in->handleType;
+    out->fd = in->fd;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkInitializePerformanceApiInfoINTEL_win32_to_host(const VkInitializePerformanceApiInfoINTEL32 *in, VkInitializePerformanceApiInfoINTEL *out)
@@ -47630,6 +47794,36 @@ static NTSTATUS thunk32_vkGetEventStatus(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetFenceFdKHR(void *args)
+{
+    struct vkGetFenceFdKHR_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->device, params->pGetFdInfo, params->pFd);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetFenceFdKHR(wine_device_from_handle(params->device)->host_device, params->pGetFdInfo, params->pFd);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetFenceFdKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pGetFdInfo;
+        PTR32 pFd;
+        VkResult result;
+    } *params = args;
+    VkFenceGetFdInfoKHR pGetFdInfo_host;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pGetFdInfo, params->pFd);
+
+    convert_VkFenceGetFdInfoKHR_win32_to_host((const VkFenceGetFdInfoKHR32 *)UlongToPtr(params->pGetFdInfo), &pGetFdInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetFenceFdKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pGetFdInfo_host, (int *)UlongToPtr(params->pFd));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetFenceStatus(void *args)
 {
     struct vkGetFenceStatus_params *params = args;
@@ -48231,6 +48425,70 @@ static NTSTATUS thunk32_vkGetLatencyTimingsNV(void *args)
     wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetLatencyTimingsNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, wine_swapchain_from_handle(params->swapchain)->host_swapchain, &pLatencyMarkerInfo_host);
     convert_VkGetLatencyMarkerInfoNV_host_to_win32(&pLatencyMarkerInfo_host, (VkGetLatencyMarkerInfoNV32 *)UlongToPtr(params->pLatencyMarkerInfo));
     free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkGetMemoryFdKHR(void *args)
+{
+    struct vkGetMemoryFdKHR_params *params = args;
+    VkMemoryGetFdInfoKHR pGetFdInfo_host;
+
+    TRACE("%p, %p, %p\n", params->device, params->pGetFdInfo, params->pFd);
+
+    convert_VkMemoryGetFdInfoKHR_win64_to_host(params->pGetFdInfo, &pGetFdInfo_host);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetMemoryFdKHR(wine_device_from_handle(params->device)->host_device, &pGetFdInfo_host, params->pFd);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetMemoryFdKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pGetFdInfo;
+        PTR32 pFd;
+        VkResult result;
+    } *params = args;
+    VkMemoryGetFdInfoKHR pGetFdInfo_host;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pGetFdInfo, params->pFd);
+
+    convert_VkMemoryGetFdInfoKHR_win32_to_host((const VkMemoryGetFdInfoKHR32 *)UlongToPtr(params->pGetFdInfo), &pGetFdInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetMemoryFdKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pGetFdInfo_host, (int *)UlongToPtr(params->pFd));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkGetMemoryFdPropertiesKHR(void *args)
+{
+    struct vkGetMemoryFdPropertiesKHR_params *params = args;
+
+    TRACE("%p, %#x, %d, %p\n", params->device, params->handleType, params->fd, params->pMemoryFdProperties);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetMemoryFdPropertiesKHR(wine_device_from_handle(params->device)->host_device, params->handleType, params->fd, params->pMemoryFdProperties);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetMemoryFdPropertiesKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkExternalMemoryHandleTypeFlagBits handleType;
+        int fd;
+        PTR32 pMemoryFdProperties;
+        VkResult result;
+    } *params = args;
+    VkMemoryFdPropertiesKHR pMemoryFdProperties_host;
+
+    TRACE("%#x, %#x, %d, %#x\n", params->device, params->handleType, params->fd, params->pMemoryFdProperties);
+
+    convert_VkMemoryFdPropertiesKHR_win32_to_host((VkMemoryFdPropertiesKHR32 *)UlongToPtr(params->pMemoryFdProperties), &pMemoryFdProperties_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetMemoryFdPropertiesKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->handleType, params->fd, &pMemoryFdProperties_host);
+    convert_VkMemoryFdPropertiesKHR_host_to_win32(&pMemoryFdProperties_host, (VkMemoryFdPropertiesKHR32 *)UlongToPtr(params->pMemoryFdProperties));
     return STATUS_SUCCESS;
 }
 
@@ -50697,6 +50955,36 @@ static NTSTATUS thunk32_vkGetSemaphoreCounterValueKHR(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetSemaphoreFdKHR(void *args)
+{
+    struct vkGetSemaphoreFdKHR_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->device, params->pGetFdInfo, params->pFd);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetSemaphoreFdKHR(wine_device_from_handle(params->device)->host_device, params->pGetFdInfo, params->pFd);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetSemaphoreFdKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pGetFdInfo;
+        PTR32 pFd;
+        VkResult result;
+    } *params = args;
+    VkSemaphoreGetFdInfoKHR pGetFdInfo_host;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pGetFdInfo, params->pFd);
+
+    convert_VkSemaphoreGetFdInfoKHR_win32_to_host((const VkSemaphoreGetFdInfoKHR32 *)UlongToPtr(params->pGetFdInfo), &pGetFdInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetSemaphoreFdKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pGetFdInfo_host, (int *)UlongToPtr(params->pFd));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetShaderBinaryDataEXT(void *args)
 {
     struct vkGetShaderBinaryDataEXT_params *params = args;
@@ -50922,6 +51210,64 @@ static NTSTATUS thunk32_vkGetVideoSessionMemoryRequirementsKHR(void *args)
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetVideoSessionMemoryRequirementsKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->videoSession, (uint32_t *)UlongToPtr(params->pMemoryRequirementsCount), pMemoryRequirements_host);
     convert_VkVideoSessionMemoryRequirementsKHR_array_host_to_win32(pMemoryRequirements_host, (VkVideoSessionMemoryRequirementsKHR32 *)UlongToPtr(params->pMemoryRequirements), *(uint32_t *)UlongToPtr(params->pMemoryRequirementsCount));
     free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkImportFenceFdKHR(void *args)
+{
+    struct vkImportFenceFdKHR_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pImportFenceFdInfo);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkImportFenceFdKHR(wine_device_from_handle(params->device)->host_device, params->pImportFenceFdInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkImportFenceFdKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pImportFenceFdInfo;
+        VkResult result;
+    } *params = args;
+    VkImportFenceFdInfoKHR pImportFenceFdInfo_host;
+
+    TRACE("%#x, %#x\n", params->device, params->pImportFenceFdInfo);
+
+    convert_VkImportFenceFdInfoKHR_win32_to_host((const VkImportFenceFdInfoKHR32 *)UlongToPtr(params->pImportFenceFdInfo), &pImportFenceFdInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkImportFenceFdKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pImportFenceFdInfo_host);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkImportSemaphoreFdKHR(void *args)
+{
+    struct vkImportSemaphoreFdKHR_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pImportSemaphoreFdInfo);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkImportSemaphoreFdKHR(wine_device_from_handle(params->device)->host_device, params->pImportSemaphoreFdInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkImportSemaphoreFdKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pImportSemaphoreFdInfo;
+        VkResult result;
+    } *params = args;
+    VkImportSemaphoreFdInfoKHR pImportSemaphoreFdInfo_host;
+
+    TRACE("%#x, %#x\n", params->device, params->pImportSemaphoreFdInfo);
+
+    convert_VkImportSemaphoreFdInfoKHR_win32_to_host((const VkImportSemaphoreFdInfoKHR32 *)UlongToPtr(params->pImportSemaphoreFdInfo), &pImportSemaphoreFdInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkImportSemaphoreFdKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pImportSemaphoreFdInfo_host);
     return STATUS_SUCCESS;
 }
 
@@ -52896,8 +53242,11 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_dynamic_rendering",
     "VK_KHR_dynamic_rendering_local_read",
     "VK_KHR_external_fence",
+    "VK_KHR_external_fence_fd",
     "VK_KHR_external_memory",
+    "VK_KHR_external_memory_fd",
     "VK_KHR_external_semaphore",
+    "VK_KHR_external_semaphore_fd",
     "VK_KHR_format_feature_flags2",
     "VK_KHR_fragment_shader_barycentric",
     "VK_KHR_fragment_shading_rate",
@@ -53579,6 +53928,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetDynamicRenderingTilePropertiesQCOM,
     thunk64_vkGetEncodedVideoSessionParametersKHR,
     thunk64_vkGetEventStatus,
+    thunk64_vkGetFenceFdKHR,
     thunk64_vkGetFenceStatus,
     thunk64_vkGetFramebufferTilePropertiesQCOM,
     thunk64_vkGetGeneratedCommandsMemoryRequirementsEXT,
@@ -53597,6 +53947,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetImageViewHandleNVX,
     thunk64_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     thunk64_vkGetLatencyTimingsNV,
+    thunk64_vkGetMemoryFdKHR,
+    thunk64_vkGetMemoryFdPropertiesKHR,
     thunk64_vkGetMemoryHostPointerPropertiesEXT,
     thunk64_vkGetMicromapBuildSizesEXT,
     thunk64_vkGetPerformanceParameterINTEL,
@@ -53672,6 +54024,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     thunk64_vkGetSemaphoreCounterValue,
     thunk64_vkGetSemaphoreCounterValueKHR,
+    thunk64_vkGetSemaphoreFdKHR,
     thunk64_vkGetShaderBinaryDataEXT,
     thunk64_vkGetShaderInfoAMD,
     thunk64_vkGetShaderModuleCreateInfoIdentifierEXT,
@@ -53679,6 +54032,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetSwapchainImagesKHR,
     thunk64_vkGetValidationCacheDataEXT,
     thunk64_vkGetVideoSessionMemoryRequirementsKHR,
+    thunk64_vkImportFenceFdKHR,
+    thunk64_vkImportSemaphoreFdKHR,
     thunk64_vkInitializePerformanceApiINTEL,
     thunk64_vkInvalidateMappedMemoryRanges,
     thunk64_vkLatencySleepNV,
@@ -54200,6 +54555,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetDynamicRenderingTilePropertiesQCOM,
     thunk32_vkGetEncodedVideoSessionParametersKHR,
     thunk32_vkGetEventStatus,
+    thunk32_vkGetFenceFdKHR,
     thunk32_vkGetFenceStatus,
     thunk32_vkGetFramebufferTilePropertiesQCOM,
     thunk32_vkGetGeneratedCommandsMemoryRequirementsEXT,
@@ -54218,6 +54574,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetImageViewHandleNVX,
     thunk32_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     thunk32_vkGetLatencyTimingsNV,
+    thunk32_vkGetMemoryFdKHR,
+    thunk32_vkGetMemoryFdPropertiesKHR,
     thunk32_vkGetMemoryHostPointerPropertiesEXT,
     thunk32_vkGetMicromapBuildSizesEXT,
     thunk32_vkGetPerformanceParameterINTEL,
@@ -54293,6 +54651,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     thunk32_vkGetSemaphoreCounterValue,
     thunk32_vkGetSemaphoreCounterValueKHR,
+    thunk32_vkGetSemaphoreFdKHR,
     thunk32_vkGetShaderBinaryDataEXT,
     thunk32_vkGetShaderInfoAMD,
     thunk32_vkGetShaderModuleCreateInfoIdentifierEXT,
@@ -54300,6 +54659,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetSwapchainImagesKHR,
     thunk32_vkGetValidationCacheDataEXT,
     thunk32_vkGetVideoSessionMemoryRequirementsKHR,
+    thunk32_vkImportFenceFdKHR,
+    thunk32_vkImportSemaphoreFdKHR,
     thunk32_vkInitializePerformanceApiINTEL,
     thunk32_vkInvalidateMappedMemoryRanges,
     thunk32_vkLatencySleepNV,
