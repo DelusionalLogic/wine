@@ -122,8 +122,17 @@ struct wine_device_memory
 {
     VULKAN_OBJECT_HEADER( VkDeviceMemory, device_memory );
     VkDeviceSize size;
+    VkExternalMemoryHandleTypeFlagBits handle_types;
+    BOOL inherit;
+    DWORD access;
+    HANDLE handle;
     void *vm_map;
 };
+
+static inline VkDeviceMemory wine_device_memory_to_handle(struct wine_device_memory *device_memory)
+{
+    return (VkDeviceMemory)(uintptr_t)device_memory;
+}
 
 static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)
 {
