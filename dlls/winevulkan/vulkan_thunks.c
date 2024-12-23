@@ -31377,6 +31377,126 @@ static inline void convert_VkImageFormatProperties_host_to_win32(const VkImageFo
     out->maxResourceSize = in->maxResourceSize;
 }
 
+#ifdef _WIN64
+static inline void convert_VkPhysicalDeviceImageFormatInfo2_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceImageFormatInfo2 *in, VkPhysicalDeviceImageFormatInfo2 *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->format = in->format;
+    out->type = in->type;
+    out->tiling = in->tiling;
+    out->usage = in->usage;
+    out->flags = in->flags;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO:
+        {
+            VkPhysicalDeviceExternalImageFormatInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceExternalImageFormatInfo *in_ext = (const VkPhysicalDeviceExternalImageFormatInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO;
+            out_ext->pNext = NULL;
+            out_ext->handleType = in_ext->handleType;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO:
+        {
+            VkImageFormatListCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageFormatListCreateInfo *in_ext = (const VkImageFormatListCreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->viewFormatCount = in_ext->viewFormatCount;
+            out_ext->pViewFormats = in_ext->pViewFormats;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO:
+        {
+            VkImageStencilUsageCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageStencilUsageCreateInfo *in_ext = (const VkImageStencilUsageCreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->stencilUsage = in_ext->stencilUsage;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_IMAGE_FORMAT_INFO_EXT:
+        {
+            VkPhysicalDeviceImageViewImageFormatInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageViewImageFormatInfoEXT *in_ext = (const VkPhysicalDeviceImageViewImageFormatInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_IMAGE_FORMAT_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageViewType = in_ext->imageViewType;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+        {
+            VkVideoProfileListInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoProfileListInfoKHR *in_ext = (const VkVideoProfileListInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->profileCount = in_ext->profileCount;
+            out_ext->pProfiles = in_ext->pProfiles;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT:
+        {
+            VkImageCompressionControlEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageCompressionControlEXT *in_ext = (const VkImageCompressionControlEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->compressionControlPlaneCount = in_ext->compressionControlPlaneCount;
+            out_ext->pFixedRateFlags = in_ext->pFixedRateFlags;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_OPTICAL_FLOW_IMAGE_FORMAT_INFO_NV:
+        {
+            VkOpticalFlowImageFormatInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkOpticalFlowImageFormatInfoNV *in_ext = (const VkOpticalFlowImageFormatInfoNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_OPTICAL_FLOW_IMAGE_FORMAT_INFO_NV;
+            out_ext->pNext = NULL;
+            out_ext->usage = in_ext->usage;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            if ((in_header->sType >> 16) == 0x7ead)
+            {
+                VkBaseOutStructure *out_ext = conversion_context_alloc(ctx, 32);
+                memcpy(out_ext, in_header, 32);
+                out_ext->pNext = NULL;
+                out_header->pNext = (void *)out_ext;
+                out_header = (void *)out_ext;
+            }
+            else
+            {
+                FIXME("Unhandled sType %u.\n", in_header->sType);
+            }
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkPhysicalDeviceImageFormatInfo2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceImageFormatInfo232 *in, VkPhysicalDeviceImageFormatInfo2 *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -50792,10 +50912,16 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties(void *args)
 static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
+    VkPhysicalDeviceImageFormatInfo2 pImageFormatInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
 
-    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+    init_conversion_context(ctx);
+    convert_VkPhysicalDeviceImageFormatInfo2_win64_to_host(ctx, params->pImageFormatInfo, &pImageFormatInfo_host);
+    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2(params->physicalDevice, &pImageFormatInfo_host, params->pImageFormatProperties);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50829,10 +50955,16 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2KHR_params *params = args;
+    VkPhysicalDeviceImageFormatInfo2 pImageFormatInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
 
-    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2KHR(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+    init_conversion_context(ctx);
+    convert_VkPhysicalDeviceImageFormatInfo2_win64_to_host(ctx, params->pImageFormatInfo, &pImageFormatInfo_host);
+    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2KHR(params->physicalDevice, &pImageFormatInfo_host, params->pImageFormatProperties);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
