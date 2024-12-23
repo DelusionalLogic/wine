@@ -1551,8 +1551,25 @@ static VkResult wine_vk_get_physical_device_image_format_properties_2(struct win
         VkResult (*p_vkGetPhysicalDeviceImageFormatProperties2)(VkPhysicalDevice, const VkPhysicalDeviceImageFormatInfo2 *, VkImageFormatProperties2 *),
         const VkPhysicalDeviceImageFormatInfo2 *format_info, VkImageFormatProperties2 *properties)
 {
+    VkPhysicalDeviceExternalImageFormatInfo *external_image_info;
     VkExternalImageFormatProperties *external_image_properties;
     VkResult res;
+
+    if ((external_image_info = find_next_struct(format_info, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO))
+            && external_image_info->handleType)
+    {
+        wine_vk_normalize_handle_types_win(&external_image_info->handleType);
+
+        if (external_image_info->handleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT)
+            external_image_info->handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+
+        wine_vk_normalize_handle_types_host(&external_image_info->handleType);
+        if (!external_image_info->handleType)
+        {
+            FIXME("Unsupported handle type %#x.\n", external_image_info->handleType);
+            return VK_ERROR_FORMAT_NOT_SUPPORTED;
+        }
+    }
 
     res = p_vkGetPhysicalDeviceImageFormatProperties2(phys_dev->obj.host.physical_device,
             format_info, properties);
@@ -1561,9 +1578,14 @@ static VkResult wine_vk_get_physical_device_image_format_properties_2(struct win
                                                       VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
     {
         VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
-        p->externalMemoryFeatures = 0;
-        p->exportFromImportedHandleTypes = 0;
-        p->compatibleHandleTypes = 0;
+
+        if (p->exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+            p->exportFromImportedHandleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+        wine_vk_normalize_handle_types_win(&p->exportFromImportedHandleTypes);
+
+        if (p->compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+            p->compatibleHandleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+        wine_vk_normalize_handle_types_win(&p->compatibleHandleTypes);
     }
     return res;
 }
@@ -2222,13 +2244,18 @@ VkResult wine_vkCreateBuffer(VkDevice client_device, const VkBufferCreateInfo *c
 VkResult wine_vkCreateImage(VkDevice client_device, const VkImageCreateInfo *create_info,
                             const VkAllocationCallbacks *allocator, VkImage *image)
 {
-    struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
-    VkExternalMemoryImageCreateInfo external_memory_info;
+    struct wine_device *device = wine_device_from_handle(client_device);
+    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->obj.physical_device, struct wine_phys_dev, obj);
+    VkExternalMemoryImageCreateInfo external_memory_info, *update_info;
     VkImageCreateInfo info = *create_info;
 
-    if (physical_device->external_memory_align &&
-        !find_next_struct(info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO))
+    if ((update_info = find_next_struct(info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO)))
+    {
+        if (update_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR)
+            update_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+        wine_vk_normalize_handle_types_host(&update_info->handleTypes);
+    }
+    else if (physical_device->external_memory_align)
     {
         external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
         external_memory_info.pNext = info.pNext;
@@ -2236,7 +2263,7 @@ VkResult wine_vkCreateImage(VkDevice client_device, const VkImageCreateInfo *cre
         info.pNext = &external_memory_info;
     }
 
-    return device->p_vkCreateImage(device->host.device, &info, NULL, image);
+    return device->obj.p_vkCreateImage(device->obj.host.device, &info, NULL, image);
 }
 
 VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
