@@ -1547,16 +1547,15 @@ void wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice client
     wine_vk_get_physical_device_external_buffer_properties(phys_dev, phys_dev->obj.instance->p_vkGetPhysicalDeviceExternalBufferPropertiesKHR, buffer_info, properties);
 }
 
-VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice client_physical_device,
-                                                        const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                        VkImageFormatProperties2 *properties)
+static VkResult wine_vk_get_physical_device_image_format_properties_2(struct wine_phys_dev *phys_dev,
+        VkResult (*p_vkGetPhysicalDeviceImageFormatProperties2)(VkPhysicalDevice, const VkPhysicalDeviceImageFormatInfo2 *, VkImageFormatProperties2 *),
+        const VkPhysicalDeviceImageFormatInfo2 *format_info, VkImageFormatProperties2 *properties)
 {
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct vulkan_instance *instance = physical_device->instance;
     VkExternalImageFormatProperties *external_image_properties;
     VkResult res;
 
-    res = instance->p_vkGetPhysicalDeviceImageFormatProperties2(physical_device->host.physical_device, format_info, properties);
+    res = p_vkGetPhysicalDeviceImageFormatProperties2(phys_dev->obj.host.physical_device,
+            format_info, properties);
 
     if ((external_image_properties = find_next_struct(properties,
                                                       VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
@@ -1566,31 +1565,29 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice client_
         p->exportFromImportedHandleTypes = 0;
         p->compatibleHandleTypes = 0;
     }
-
     return res;
+}
+
+VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice client_physical_device,
+                                                        const VkPhysicalDeviceImageFormatInfo2 *format_info,
+                                                        VkImageFormatProperties2 *properties)
+{
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(client_physical_device);
+
+    return wine_vk_get_physical_device_image_format_properties_2(phys_dev,
+            phys_dev->obj.instance->p_vkGetPhysicalDeviceImageFormatProperties2,
+            format_info, properties);
 }
 
 VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice client_physical_device,
                                                            const VkPhysicalDeviceImageFormatInfo2 *format_info,
                                                            VkImageFormatProperties2 *properties)
 {
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct vulkan_instance *instance = physical_device->instance;
-    VkExternalImageFormatProperties *external_image_properties;
-    VkResult res;
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(client_physical_device);
 
-    res = instance->p_vkGetPhysicalDeviceImageFormatProperties2KHR(physical_device->host.physical_device, format_info, properties);
-
-    if ((external_image_properties = find_next_struct(properties,
-                                                      VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
-    {
-        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
-        p->externalMemoryFeatures = 0;
-        p->exportFromImportedHandleTypes = 0;
-        p->compatibleHandleTypes = 0;
-    }
-
-    return res;
+    return wine_vk_get_physical_device_image_format_properties_2(phys_dev,
+            phys_dev->obj.instance->p_vkGetPhysicalDeviceImageFormatProperties2KHR,
+            format_info, properties);
 }
 
 /* From ntdll/unix/sync.c */
