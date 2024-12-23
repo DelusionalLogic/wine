@@ -541,12 +541,71 @@ static const char *find_extension(const char *const *extensions, uint32_t count,
     return NULL;
 }
 
+static char **parse_xr_extensions(unsigned int *len)
+{
+    char *xr_str, *iter, *start, **list;
+    unsigned int extension_count = 0, o = 0;
+
+    xr_str = getenv("__WINE_OPENXR_VK_DEVICE_EXTENSIONS");
+    if (!xr_str)
+    {
+        *len = 0;
+        return NULL;
+    }
+    xr_str = strdup(xr_str);
+
+    TRACE("got var: %s\n", xr_str);
+
+    iter = xr_str;
+    while(*iter){
+        if(*iter++ == ' ')
+            extension_count++;
+    }
+    /* count the one ending in NUL */
+    if(iter != xr_str)
+        extension_count++;
+    if(!extension_count){
+        *len = 0;
+        return NULL;
+    }
+
+    TRACE("counted %u extensions\n", extension_count);
+
+    list = malloc(extension_count * sizeof(char *));
+
+    start = iter = xr_str;
+    do{
+        if(*iter == ' '){
+            *iter = 0;
+            list[o++] = strdup(start);
+            TRACE("added %s to list\n", list[o-1]);
+            iter++;
+            start = iter;
+        }else if(*iter == 0){
+            list[o++] = strdup(start);
+            TRACE("added %s to list\n", list[o-1]);
+            break;
+        }else{
+            iter++;
+        }
+    }while(1);
+
+    free(xr_str);
+
+    *len = extension_count;
+
+    return list;
+}
+
 static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physical_device,
         struct conversion_context *ctx, const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst)
 {
+    static const char *wine_xr_extension_name = "VK_WINE_openxr_device_extensions";
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(client_physical_device);
     const char *extra_extensions[2], * const*extensions = src->ppEnabledExtensionNames;
     unsigned int i, extra_count = 0, extensions_count = src->enabledExtensionCount;
+    char **extra_xr_extensions;
+    unsigned int count, o = 0, append_xr = 0;
 
     *dst = *src;
 
@@ -564,6 +623,9 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
+
+        if (!strcmp(extension_name, wine_xr_extension_name))
+            append_xr = 1;
     }
 
     if (phys_dev->map_placed_align)
@@ -590,14 +652,34 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
             extra_extensions[extra_count++] = "VK_EXT_external_memory_host";
     }
 
-    if (extra_count)
+    if (append_xr)
+        extra_xr_extensions = parse_xr_extensions(&append_xr);
+
+    if (extra_count || append_xr)
     {
         const char **new_extensions;
 
-        dst->enabledExtensionCount += extra_count;
-        new_extensions = conversion_context_alloc(ctx, dst->enabledExtensionCount * sizeof(*new_extensions));
-        memcpy(new_extensions, extensions, extensions_count * sizeof(*new_extensions));
-        memcpy(new_extensions + extensions_count, extra_extensions, extra_count * sizeof(*new_extensions));
+        count = dst->enabledExtensionCount + extra_count;
+        if (append_xr)
+            count += append_xr - 1;
+        new_extensions = conversion_context_alloc(ctx, count *
+                                                  sizeof(*dst->ppEnabledExtensionNames));
+        for (i = 0; i < dst->enabledExtensionCount; i++)
+        {
+            if (append_xr && !strcmp(src->ppEnabledExtensionNames[i], wine_xr_extension_name))
+                continue;
+            new_extensions[o++] = src->ppEnabledExtensionNames[i];
+        }
+        for (i = 0; i < extra_count; i++)
+        {
+            new_extensions[o++] = extra_extensions[i];
+        }
+        for (i = 0; i < append_xr; i++)
+        {
+            TRACE("\t%s\n", extra_xr_extensions[i]);
+            new_extensions[o++] = extra_xr_extensions[i];
+        }
+        dst->enabledExtensionCount = count;
         dst->ppEnabledExtensionNames = new_extensions;
     }
 
@@ -2169,28 +2251,28 @@ DECLSPEC_EXPORT VkDevice __wine_get_native_VkDevice(VkDevice handle)
 {
     struct wine_device *device = wine_device_from_handle(handle);
 
-    return device->host_device;
+    return device->obj.host.device;
 }
 
 DECLSPEC_EXPORT VkInstance __wine_get_native_VkInstance(VkInstance handle)
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
 
-    return instance->host_instance;
+    return instance->obj.host.instance;
 }
 
 DECLSPEC_EXPORT VkPhysicalDevice __wine_get_native_VkPhysicalDevice(VkPhysicalDevice handle)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
 
-    return phys_dev->host_physical_device;
+    return phys_dev->obj.host.physical_device;
 }
 
 DECLSPEC_EXPORT VkQueue __wine_get_native_VkQueue(VkQueue handle)
 {
-    struct wine_queue *queue = wine_queue_from_handle(handle);
+    struct vulkan_queue *queue = vulkan_queue_from_handle(handle);
 
-    return queue->host_queue;
+    return queue->host.queue;
 }
 
 DECLSPEC_EXPORT VkPhysicalDevice __wine_get_wrapped_VkPhysicalDevice(VkInstance handle, VkPhysicalDevice native_phys_dev)
@@ -2198,8 +2280,8 @@ DECLSPEC_EXPORT VkPhysicalDevice __wine_get_wrapped_VkPhysicalDevice(VkInstance 
     struct wine_instance *instance = wine_instance_from_handle(handle);
     uint32_t i;
     for (i = 0; i < instance->phys_dev_count; ++i){
-        if (instance->phys_devs[i].host_physical_device == native_phys_dev)
-            return instance->phys_devs[i].handle;
+        if (instance->phys_devs[i].obj.host.physical_device == native_phys_dev)
+            return instance->phys_devs[i].obj.client.physical_device;
     }
     WARN("Unknown native physical device: %p\n", native_phys_dev);
     return NULL;
