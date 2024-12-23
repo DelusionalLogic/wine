@@ -4789,6 +4789,18 @@ VkResult WINAPI vkGetEventStatus(VkDevice device, VkEvent event)
     return params.result;
 }
 
+VkResult WINAPI vkGetFenceFdKHR(VkDevice device, const VkFenceGetFdInfoKHR *pGetFdInfo, int *pFd)
+{
+    struct vkGetFenceFdKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pGetFdInfo = pGetFdInfo;
+    params.pFd = pFd;
+    status = UNIX_CALL(vkGetFenceFdKHR, &params);
+    assert(!status && "vkGetFenceFdKHR");
+    return params.result;
+}
+
 VkResult WINAPI vkGetFenceStatus(VkDevice device, VkFence fence)
 {
     struct vkGetFenceStatus_params params;
@@ -5019,6 +5031,31 @@ void WINAPI vkGetLatencyTimingsNV(VkDevice device, VkSwapchainKHR swapchain, VkG
     params.pLatencyMarkerInfo = pLatencyMarkerInfo;
     status = UNIX_CALL(vkGetLatencyTimingsNV, &params);
     assert(!status && "vkGetLatencyTimingsNV");
+}
+
+VkResult WINAPI vkGetMemoryFdKHR(VkDevice device, const VkMemoryGetFdInfoKHR *pGetFdInfo, int *pFd)
+{
+    struct vkGetMemoryFdKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pGetFdInfo = pGetFdInfo;
+    params.pFd = pFd;
+    status = UNIX_CALL(vkGetMemoryFdKHR, &params);
+    assert(!status && "vkGetMemoryFdKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkGetMemoryFdPropertiesKHR(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, int fd, VkMemoryFdPropertiesKHR *pMemoryFdProperties)
+{
+    struct vkGetMemoryFdPropertiesKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.handleType = handleType;
+    params.fd = fd;
+    params.pMemoryFdProperties = pMemoryFdProperties;
+    status = UNIX_CALL(vkGetMemoryFdPropertiesKHR, &params);
+    assert(!status && "vkGetMemoryFdPropertiesKHR");
+    return params.result;
 }
 
 VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties)
@@ -5947,6 +5984,18 @@ VkResult WINAPI vkGetSemaphoreCounterValueKHR(VkDevice device, VkSemaphore semap
     return params.result;
 }
 
+VkResult WINAPI vkGetSemaphoreFdKHR(VkDevice device, const VkSemaphoreGetFdInfoKHR *pGetFdInfo, int *pFd)
+{
+    struct vkGetSemaphoreFdKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pGetFdInfo = pGetFdInfo;
+    params.pFd = pFd;
+    status = UNIX_CALL(vkGetSemaphoreFdKHR, &params);
+    assert(!status && "vkGetSemaphoreFdKHR");
+    return params.result;
+}
+
 VkResult WINAPI vkGetShaderBinaryDataEXT(VkDevice device, VkShaderEXT shader, size_t *pDataSize, void *pData)
 {
     struct vkGetShaderBinaryDataEXT_params params;
@@ -6033,6 +6082,28 @@ VkResult WINAPI vkGetVideoSessionMemoryRequirementsKHR(VkDevice device, VkVideoS
     params.pMemoryRequirements = pMemoryRequirements;
     status = UNIX_CALL(vkGetVideoSessionMemoryRequirementsKHR, &params);
     assert(!status && "vkGetVideoSessionMemoryRequirementsKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkImportFenceFdKHR(VkDevice device, const VkImportFenceFdInfoKHR *pImportFenceFdInfo)
+{
+    struct vkImportFenceFdKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pImportFenceFdInfo = pImportFenceFdInfo;
+    status = UNIX_CALL(vkImportFenceFdKHR, &params);
+    assert(!status && "vkImportFenceFdKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkImportSemaphoreFdKHR(VkDevice device, const VkImportSemaphoreFdInfoKHR *pImportSemaphoreFdInfo)
+{
+    struct vkImportSemaphoreFdKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pImportSemaphoreFdInfo = pImportSemaphoreFdInfo;
+    status = UNIX_CALL(vkImportSemaphoreFdKHR, &params);
+    assert(!status && "vkImportSemaphoreFdKHR");
     return params.result;
 }
 
@@ -7214,6 +7285,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetDynamicRenderingTilePropertiesQCOM", vkGetDynamicRenderingTilePropertiesQCOM},
     {"vkGetEncodedVideoSessionParametersKHR", vkGetEncodedVideoSessionParametersKHR},
     {"vkGetEventStatus", vkGetEventStatus},
+    {"vkGetFenceFdKHR", vkGetFenceFdKHR},
     {"vkGetFenceStatus", vkGetFenceStatus},
     {"vkGetFramebufferTilePropertiesQCOM", vkGetFramebufferTilePropertiesQCOM},
     {"vkGetGeneratedCommandsMemoryRequirementsEXT", vkGetGeneratedCommandsMemoryRequirementsEXT},
@@ -7234,6 +7306,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageViewHandleNVX", vkGetImageViewHandleNVX},
     {"vkGetImageViewOpaqueCaptureDescriptorDataEXT", vkGetImageViewOpaqueCaptureDescriptorDataEXT},
     {"vkGetLatencyTimingsNV", vkGetLatencyTimingsNV},
+    {"vkGetMemoryFdKHR", vkGetMemoryFdKHR},
+    {"vkGetMemoryFdPropertiesKHR", vkGetMemoryFdPropertiesKHR},
     {"vkGetMemoryHostPointerPropertiesEXT", vkGetMemoryHostPointerPropertiesEXT},
     {"vkGetMicromapBuildSizesEXT", vkGetMicromapBuildSizesEXT},
     {"vkGetPartitionedAccelerationStructuresBuildSizesNV", vkGetPartitionedAccelerationStructuresBuildSizesNV},
@@ -7262,6 +7336,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetSamplerOpaqueCaptureDescriptorDataEXT", vkGetSamplerOpaqueCaptureDescriptorDataEXT},
     {"vkGetSemaphoreCounterValue", vkGetSemaphoreCounterValue},
     {"vkGetSemaphoreCounterValueKHR", vkGetSemaphoreCounterValueKHR},
+    {"vkGetSemaphoreFdKHR", vkGetSemaphoreFdKHR},
     {"vkGetShaderBinaryDataEXT", vkGetShaderBinaryDataEXT},
     {"vkGetShaderInfoAMD", vkGetShaderInfoAMD},
     {"vkGetShaderModuleCreateInfoIdentifierEXT", vkGetShaderModuleCreateInfoIdentifierEXT},
@@ -7269,6 +7344,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetSwapchainImagesKHR", vkGetSwapchainImagesKHR},
     {"vkGetValidationCacheDataEXT", vkGetValidationCacheDataEXT},
     {"vkGetVideoSessionMemoryRequirementsKHR", vkGetVideoSessionMemoryRequirementsKHR},
+    {"vkImportFenceFdKHR", vkImportFenceFdKHR},
+    {"vkImportSemaphoreFdKHR", vkImportSemaphoreFdKHR},
     {"vkInitializePerformanceApiINTEL", vkInitializePerformanceApiINTEL},
     {"vkInvalidateMappedMemoryRanges", vkInvalidateMappedMemoryRanges},
     {"vkLatencySleepNV", vkLatencySleepNV},

@@ -488,6 +488,7 @@ enum unix_call
     unix_vkGetDynamicRenderingTilePropertiesQCOM,
     unix_vkGetEncodedVideoSessionParametersKHR,
     unix_vkGetEventStatus,
+    unix_vkGetFenceFdKHR,
     unix_vkGetFenceStatus,
     unix_vkGetFramebufferTilePropertiesQCOM,
     unix_vkGetGeneratedCommandsMemoryRequirementsEXT,
@@ -508,6 +509,8 @@ enum unix_call
     unix_vkGetImageViewHandleNVX,
     unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     unix_vkGetLatencyTimingsNV,
+    unix_vkGetMemoryFdKHR,
+    unix_vkGetMemoryFdPropertiesKHR,
     unix_vkGetMemoryHostPointerPropertiesEXT,
     unix_vkGetMicromapBuildSizesEXT,
     unix_vkGetPartitionedAccelerationStructuresBuildSizesNV,
@@ -587,6 +590,7 @@ enum unix_call
     unix_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     unix_vkGetSemaphoreCounterValue,
     unix_vkGetSemaphoreCounterValueKHR,
+    unix_vkGetSemaphoreFdKHR,
     unix_vkGetShaderBinaryDataEXT,
     unix_vkGetShaderInfoAMD,
     unix_vkGetShaderModuleCreateInfoIdentifierEXT,
@@ -594,6 +598,8 @@ enum unix_call
     unix_vkGetSwapchainImagesKHR,
     unix_vkGetValidationCacheDataEXT,
     unix_vkGetVideoSessionMemoryRequirementsKHR,
+    unix_vkImportFenceFdKHR,
+    unix_vkImportSemaphoreFdKHR,
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
     unix_vkLatencySleepNV,
@@ -4219,6 +4225,14 @@ struct vkGetEventStatus_params
     VkResult result;
 };
 
+struct vkGetFenceFdKHR_params
+{
+    VkDevice device;
+    const VkFenceGetFdInfoKHR *pGetFdInfo;
+    int *pFd;
+    VkResult result;
+};
+
 struct vkGetFenceStatus_params
 {
     VkDevice device;
@@ -4369,6 +4383,23 @@ struct vkGetLatencyTimingsNV_params
     VkDevice device;
     VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
     VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo;
+};
+
+struct vkGetMemoryFdKHR_params
+{
+    VkDevice device;
+    const VkMemoryGetFdInfoKHR *pGetFdInfo;
+    int *pFd;
+    VkResult result;
+};
+
+struct vkGetMemoryFdPropertiesKHR_params
+{
+    VkDevice device;
+    VkExternalMemoryHandleTypeFlagBits handleType;
+    int fd;
+    VkMemoryFdPropertiesKHR *pMemoryFdProperties;
+    VkResult result;
 };
 
 struct vkGetMemoryHostPointerPropertiesEXT_params
@@ -5001,6 +5032,14 @@ struct vkGetSemaphoreCounterValueKHR_params
     VkResult result;
 };
 
+struct vkGetSemaphoreFdKHR_params
+{
+    VkDevice device;
+    const VkSemaphoreGetFdInfoKHR *pGetFdInfo;
+    int *pFd;
+    VkResult result;
+};
+
 struct vkGetShaderBinaryDataEXT_params
 {
     VkDevice device;
@@ -5059,6 +5098,20 @@ struct vkGetVideoSessionMemoryRequirementsKHR_params
     VkVideoSessionKHR DECLSPEC_ALIGN(8) videoSession;
     uint32_t *pMemoryRequirementsCount;
     VkVideoSessionMemoryRequirementsKHR *pMemoryRequirements;
+    VkResult result;
+};
+
+struct vkImportFenceFdKHR_params
+{
+    VkDevice device;
+    const VkImportFenceFdInfoKHR *pImportFenceFdInfo;
+    VkResult result;
+};
+
+struct vkImportSemaphoreFdKHR_params
+{
+    VkDevice device;
+    const VkImportSemaphoreFdInfoKHR *pImportSemaphoreFdInfo;
     VkResult result;
 };
 

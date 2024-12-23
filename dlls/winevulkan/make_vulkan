@@ -25,9 +25,15 @@ import os
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
-from collections import OrderedDict
-from collections.abc import Sequence
-from enum import Enum
+from collections import (
+    OrderedDict,
+)
+from collections.abc import (
+    Sequence,
+)
+from enum import (
+    Enum,
+)
 
 # This script generates code for a Wine Vulkan ICD driver from Vulkan's vk.xml.
 # Generating the code is like 10x worse than OpenGL, which is mostly a calling
@@ -111,9 +117,6 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_EXT_metal_objects",
     "VK_EXT_physical_device_drm",
     "VK_GOOGLE_surfaceless_query",
-    "VK_KHR_external_fence_fd",
-    "VK_KHR_external_memory_fd",
-    "VK_KHR_external_semaphore_fd",
     "VK_SEC_amigo_profiling", # Angle specific.
 
     # Extensions which require callback handling
