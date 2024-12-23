@@ -593,6 +593,7 @@ enum unix_call
     unix_vkGetSemaphoreCounterValue,
     unix_vkGetSemaphoreCounterValueKHR,
     unix_vkGetSemaphoreFdKHR,
+    unix_vkGetSemaphoreWin32HandleKHR,
     unix_vkGetShaderBinaryDataEXT,
     unix_vkGetShaderInfoAMD,
     unix_vkGetShaderModuleCreateInfoIdentifierEXT,
@@ -602,6 +603,7 @@ enum unix_call
     unix_vkGetVideoSessionMemoryRequirementsKHR,
     unix_vkImportFenceFdKHR,
     unix_vkImportSemaphoreFdKHR,
+    unix_vkImportSemaphoreWin32HandleKHR,
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
     unix_vkLatencySleepNV,
@@ -5059,6 +5061,14 @@ struct vkGetSemaphoreFdKHR_params
     VkResult result;
 };
 
+struct vkGetSemaphoreWin32HandleKHR_params
+{
+    VkDevice device;
+    const VkSemaphoreGetWin32HandleInfoKHR *pGetWin32HandleInfo;
+    HANDLE *pHandle;
+    VkResult result;
+};
+
 struct vkGetShaderBinaryDataEXT_params
 {
     VkDevice device;
@@ -5131,6 +5141,13 @@ struct vkImportSemaphoreFdKHR_params
 {
     VkDevice device;
     const VkImportSemaphoreFdInfoKHR *pImportSemaphoreFdInfo;
+    VkResult result;
+};
+
+struct vkImportSemaphoreWin32HandleKHR_params
+{
+    VkDevice device;
+    const VkImportSemaphoreWin32HandleInfoKHR *pImportSemaphoreWin32HandleInfo;
     VkResult result;
 };
 
