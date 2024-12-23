@@ -104,7 +104,6 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_EXT_full_screen_exclusive",
     "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",
-    "VK_KHR_external_semaphore_win32",
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_maintenance7", # Causes infinity recursion in struct convert code
     "VK_KHR_shared_presentable_image", # Needs WSI work.
@@ -178,7 +177,7 @@ FUNCTION_OVERRIDES = {
     "vkCreateDevice" : {"extra_param" : "client_ptr"},
     "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : True},
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False},
-    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False},
+    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : True},
 
     # Device functions
     "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
@@ -192,7 +191,12 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : True},
 
     # VK_KHR_external_semaphore_capabilities
-    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False},
+    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : True},
+
+    # VK_KHR_external_semaphore_win32
+    "vkCreateSemaphore" : {"dispatch" : True, "extra_param" : "pCreateInfo"},
+    "vkGetSemaphoreWin32HandleKHR" : {"dispatch" : True},
+    "vkImportSemaphoreWin32HandleKHR" : {"dispatch" : True},
 
     # VK_KHR_external_memory_win32
     "vkGetMemoryWin32HandleKHR" : {"dispatch" : True},
@@ -223,6 +227,7 @@ MANUAL_UNIX_THUNKS = {
     "vkCreateDevice",
     "vkCreateImage",
     "vkCreateInstance",
+    "vkCreateSemaphore",
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroyCommandPool",
@@ -233,6 +238,8 @@ MANUAL_UNIX_THUNKS = {
     "vkDestroyInstance",
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
+    "vkGetSemaphoreWin32HandleKHR",
+    "vkImportSemaphoreWin32HandleKHR",
     "vkEnumerateDeviceExtensionProperties",
     "vkEnumerateDeviceLayerProperties",
     "vkEnumerateInstanceExtensionProperties",
@@ -305,6 +312,7 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkImageCreateInfo": [],
     "VkMemoryAllocateInfo": ["VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR", "VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR"],
     "VkPhysicalDeviceImageFormatInfo2": [],
+    "VkSemaphoreCreateInfo": ["VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR"],
 }
 
 # Some struct members are conditionally ignored and callers are free to leave them uninitialized.
