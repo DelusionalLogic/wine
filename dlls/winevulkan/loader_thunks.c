@@ -4703,6 +4703,18 @@ void WINAPI vkGetGeneratedCommandsMemoryRequirementsNV(VkDevice device, const Vk
     assert(!status && "vkGetGeneratedCommandsMemoryRequirementsNV");
 }
 
+VkResult WINAPI vkGetImageDrmFormatModifierPropertiesEXT(VkDevice device, VkImage image, VkImageDrmFormatModifierPropertiesEXT *pProperties)
+{
+    struct vkGetImageDrmFormatModifierPropertiesEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.image = image;
+    params.pProperties = pProperties;
+    status = UNIX_CALL(vkGetImageDrmFormatModifierPropertiesEXT, &params);
+    assert(!status && "vkGetImageDrmFormatModifierPropertiesEXT");
+    return params.result;
+}
+
 void WINAPI vkGetImageMemoryRequirements(VkDevice device, VkImage image, VkMemoryRequirements *pMemoryRequirements)
 {
     struct vkGetImageMemoryRequirements_params params;
@@ -7073,6 +7085,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetFramebufferTilePropertiesQCOM", vkGetFramebufferTilePropertiesQCOM},
     {"vkGetGeneratedCommandsMemoryRequirementsEXT", vkGetGeneratedCommandsMemoryRequirementsEXT},
     {"vkGetGeneratedCommandsMemoryRequirementsNV", vkGetGeneratedCommandsMemoryRequirementsNV},
+    {"vkGetImageDrmFormatModifierPropertiesEXT", vkGetImageDrmFormatModifierPropertiesEXT},
     {"vkGetImageMemoryRequirements", vkGetImageMemoryRequirements},
     {"vkGetImageMemoryRequirements2", vkGetImageMemoryRequirements2},
     {"vkGetImageMemoryRequirements2KHR", vkGetImageMemoryRequirements2KHR},

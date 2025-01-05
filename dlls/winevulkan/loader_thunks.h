@@ -476,6 +476,7 @@ enum unix_call
     unix_vkGetFramebufferTilePropertiesQCOM,
     unix_vkGetGeneratedCommandsMemoryRequirementsEXT,
     unix_vkGetGeneratedCommandsMemoryRequirementsNV,
+    unix_vkGetImageDrmFormatModifierPropertiesEXT,
     unix_vkGetImageMemoryRequirements,
     unix_vkGetImageMemoryRequirements2,
     unix_vkGetImageMemoryRequirements2KHR,
@@ -4131,6 +4132,14 @@ struct vkGetGeneratedCommandsMemoryRequirementsNV_params
     VkDevice device;
     const VkGeneratedCommandsMemoryRequirementsInfoNV *pInfo;
     VkMemoryRequirements2 *pMemoryRequirements;
+};
+
+struct vkGetImageDrmFormatModifierPropertiesEXT_params
+{
+    VkDevice device;
+    VkImage DECLSPEC_ALIGN(8) image;
+    VkImageDrmFormatModifierPropertiesEXT *pProperties;
+    VkResult result;
 };
 
 struct vkGetImageMemoryRequirements_params
