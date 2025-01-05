@@ -5119,6 +5119,15 @@ typedef struct VkGraphicsPipelineCreateInfo32
     int32_t basePipelineIndex;
 } VkGraphicsPipelineCreateInfo32;
 
+typedef struct VkSubresourceLayout32
+{
+    VkDeviceSize DECLSPEC_ALIGN(8) offset;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
+    VkDeviceSize DECLSPEC_ALIGN(8) rowPitch;
+    VkDeviceSize DECLSPEC_ALIGN(8) arrayPitch;
+    VkDeviceSize DECLSPEC_ALIGN(8) depthPitch;
+} VkSubresourceLayout32;
+
 typedef struct VkDedicatedAllocationImageCreateInfoNV32
 {
     VkStructureType sType;
@@ -5149,6 +5158,23 @@ typedef struct VkImageFormatListCreateInfo32
     PTR32 pViewFormats;
 } VkImageFormatListCreateInfo32;
 typedef VkImageFormatListCreateInfo32 VkImageFormatListCreateInfoKHR32;
+
+typedef struct VkImageDrmFormatModifierListCreateInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t drmFormatModifierCount;
+    PTR32 pDrmFormatModifiers;
+} VkImageDrmFormatModifierListCreateInfoEXT32;
+
+typedef struct VkImageDrmFormatModifierExplicitCreateInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint64_t DECLSPEC_ALIGN(8) drmFormatModifier;
+    uint32_t drmFormatModifierPlaneCount;
+    PTR32 pPlaneLayouts;
+} VkImageDrmFormatModifierExplicitCreateInfoEXT32;
 
 typedef struct VkImageStencilUsageCreateInfo32
 {
@@ -6493,15 +6519,6 @@ typedef struct VkDeviceImageSubresourceInfo32
 } VkDeviceImageSubresourceInfo32;
 typedef VkDeviceImageSubresourceInfo32 VkDeviceImageSubresourceInfoKHR32;
 
-typedef struct VkSubresourceLayout32
-{
-    VkDeviceSize DECLSPEC_ALIGN(8) offset;
-    VkDeviceSize DECLSPEC_ALIGN(8) size;
-    VkDeviceSize DECLSPEC_ALIGN(8) rowPitch;
-    VkDeviceSize DECLSPEC_ALIGN(8) arrayPitch;
-    VkDeviceSize DECLSPEC_ALIGN(8) depthPitch;
-} VkSubresourceLayout32;
-
 typedef struct VkSubresourceHostMemcpySize32
 {
     VkStructureType sType;
@@ -6640,6 +6657,13 @@ typedef struct VkGeneratedCommandsMemoryRequirementsInfoNV32
     VkIndirectCommandsLayoutNV DECLSPEC_ALIGN(8) indirectCommandsLayout;
     uint32_t maxSequencesCount;
 } VkGeneratedCommandsMemoryRequirementsInfoNV32;
+
+typedef struct VkImageDrmFormatModifierPropertiesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint64_t DECLSPEC_ALIGN(8) drmFormatModifier;
+} VkImageDrmFormatModifierPropertiesEXT32;
 
 typedef struct VkImagePlaneMemoryRequirementsInfo32
 {
@@ -6896,6 +6920,28 @@ typedef struct VkExternalSemaphoreProperties32
 } VkExternalSemaphoreProperties32;
 typedef VkExternalSemaphoreProperties32 VkExternalSemaphorePropertiesKHR32;
 
+typedef struct VkDrmFormatModifierPropertiesEXT32
+{
+    uint64_t DECLSPEC_ALIGN(8) drmFormatModifier;
+    uint32_t drmFormatModifierPlaneCount;
+    VkFormatFeatureFlags drmFormatModifierTilingFeatures;
+} VkDrmFormatModifierPropertiesEXT32;
+
+typedef struct VkDrmFormatModifierProperties2EXT32
+{
+    uint64_t DECLSPEC_ALIGN(8) drmFormatModifier;
+    uint32_t drmFormatModifierPlaneCount;
+    VkFormatFeatureFlags2 DECLSPEC_ALIGN(8) drmFormatModifierTilingFeatures;
+} VkDrmFormatModifierProperties2EXT32;
+
+typedef struct VkDrmFormatModifierPropertiesListEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t drmFormatModifierCount;
+    PTR32 pDrmFormatModifierProperties;
+} VkDrmFormatModifierPropertiesListEXT32;
+
 typedef struct VkSubpassResolvePerformanceQueryEXT32
 {
     VkStructureType sType;
@@ -6912,6 +6958,14 @@ typedef struct VkFormatProperties332
     VkFormatFeatureFlags2 DECLSPEC_ALIGN(8) bufferFeatures;
 } VkFormatProperties332;
 typedef VkFormatProperties332 VkFormatProperties3KHR32;
+
+typedef struct VkDrmFormatModifierPropertiesList2EXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t drmFormatModifierCount;
+    PTR32 pDrmFormatModifierProperties;
+} VkDrmFormatModifierPropertiesList2EXT32;
 
 typedef struct VkFormatProperties232
 {
@@ -6945,6 +6999,16 @@ typedef struct VkPhysicalDeviceExternalImageFormatInfo32
     VkExternalMemoryHandleTypeFlagBits handleType;
 } VkPhysicalDeviceExternalImageFormatInfo32;
 typedef VkPhysicalDeviceExternalImageFormatInfo32 VkPhysicalDeviceExternalImageFormatInfoKHR32;
+
+typedef struct VkPhysicalDeviceImageDrmFormatModifierInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint64_t DECLSPEC_ALIGN(8) drmFormatModifier;
+    VkSharingMode sharingMode;
+    uint32_t queueFamilyIndexCount;
+    PTR32 pQueueFamilyIndices;
+} VkPhysicalDeviceImageDrmFormatModifierInfoEXT32;
 
 typedef struct VkPhysicalDeviceImageViewImageFormatInfoEXT32
 {
@@ -23503,6 +23567,33 @@ static inline void convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(cons
     }
 }
 
+static inline void convert_VkSubresourceLayout_win32_to_host(const VkSubresourceLayout32 *in, VkSubresourceLayout *out)
+{
+    if (!in) return;
+
+    out->offset = in->offset;
+    out->size = in->size;
+    out->rowPitch = in->rowPitch;
+    out->arrayPitch = in->arrayPitch;
+    out->depthPitch = in->depthPitch;
+}
+
+static inline const VkSubresourceLayout *convert_VkSubresourceLayout_array_win32_to_host(struct conversion_context *ctx, const VkSubresourceLayout32 *in, uint32_t count)
+{
+    VkSubresourceLayout *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSubresourceLayout_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
 #ifdef _WIN64
 static inline void convert_VkImageCreateInfo_win64_to_host(struct conversion_context *ctx, const VkImageCreateInfo *in, VkImageCreateInfo *out)
 {
@@ -23572,6 +23663,31 @@ static inline void convert_VkImageCreateInfo_win64_to_host(struct conversion_con
             out_ext->pNext = NULL;
             out_ext->viewFormatCount = in_ext->viewFormatCount;
             out_ext->pViewFormats = in_ext->pViewFormats;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT:
+        {
+            VkImageDrmFormatModifierListCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageDrmFormatModifierListCreateInfoEXT *in_ext = (const VkImageDrmFormatModifierListCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->drmFormatModifierCount = in_ext->drmFormatModifierCount;
+            out_ext->pDrmFormatModifiers = in_ext->pDrmFormatModifiers;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT:
+        {
+            VkImageDrmFormatModifierExplicitCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageDrmFormatModifierExplicitCreateInfoEXT *in_ext = (const VkImageDrmFormatModifierExplicitCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->drmFormatModifier = in_ext->drmFormatModifier;
+            out_ext->drmFormatModifierPlaneCount = in_ext->drmFormatModifierPlaneCount;
+            out_ext->pPlaneLayouts = in_ext->pPlaneLayouts;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -23732,6 +23848,31 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
             out_ext->pNext = NULL;
             out_ext->viewFormatCount = in_ext->viewFormatCount;
             out_ext->pViewFormats = UlongToPtr(in_ext->pViewFormats);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT:
+        {
+            VkImageDrmFormatModifierListCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageDrmFormatModifierListCreateInfoEXT32 *in_ext = (const VkImageDrmFormatModifierListCreateInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->drmFormatModifierCount = in_ext->drmFormatModifierCount;
+            out_ext->pDrmFormatModifiers = UlongToPtr(in_ext->pDrmFormatModifiers);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT:
+        {
+            VkImageDrmFormatModifierExplicitCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageDrmFormatModifierExplicitCreateInfoEXT32 *in_ext = (const VkImageDrmFormatModifierExplicitCreateInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->drmFormatModifier = in_ext->drmFormatModifier;
+            out_ext->drmFormatModifierPlaneCount = in_ext->drmFormatModifierPlaneCount;
+            out_ext->pPlaneLayouts = convert_VkSubresourceLayout_array_win32_to_host(ctx, (const VkSubresourceLayout32 *)UlongToPtr(in_ext->pPlaneLayouts), in_ext->drmFormatModifierPlaneCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -27907,17 +28048,6 @@ static inline void convert_VkDeviceImageSubresourceInfo_win32_to_host(struct con
         FIXME("Unexpected pNext\n");
 }
 
-static inline void convert_VkSubresourceLayout_win32_to_host(const VkSubresourceLayout32 *in, VkSubresourceLayout *out)
-{
-    if (!in) return;
-
-    out->offset = in->offset;
-    out->size = in->size;
-    out->rowPitch = in->rowPitch;
-    out->arrayPitch = in->arrayPitch;
-    out->depthPitch = in->depthPitch;
-}
-
 static inline void convert_VkSubresourceLayout_host_to_win32(const VkSubresourceLayout *in, VkSubresourceLayout32 *out)
 {
     if (!in) return;
@@ -28349,6 +28479,23 @@ static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_
     out->maxSequencesCount = in->maxSequencesCount;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkImageDrmFormatModifierPropertiesEXT_win32_to_host(const VkImageDrmFormatModifierPropertiesEXT32 *in, VkImageDrmFormatModifierPropertiesEXT *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkImageDrmFormatModifierPropertiesEXT_host_to_win32(const VkImageDrmFormatModifierPropertiesEXT *in, VkImageDrmFormatModifierPropertiesEXT32 *out)
+{
+    if (!in) return;
+
+    out->drmFormatModifier = in->drmFormatModifier;
 }
 
 static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(struct conversion_context *ctx, const VkImageMemoryRequirementsInfo232 *in, VkImageMemoryRequirementsInfo2 *out)
@@ -33742,6 +33889,68 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
     }
 }
 
+static inline void convert_VkDrmFormatModifierPropertiesEXT_host_to_win32(const VkDrmFormatModifierPropertiesEXT *in, VkDrmFormatModifierPropertiesEXT32 *out)
+{
+    if (!in) return;
+
+    out->drmFormatModifier = in->drmFormatModifier;
+    out->drmFormatModifierPlaneCount = in->drmFormatModifierPlaneCount;
+    out->drmFormatModifierTilingFeatures = in->drmFormatModifierTilingFeatures;
+}
+
+static inline VkDrmFormatModifierPropertiesEXT *convert_VkDrmFormatModifierPropertiesEXT_array_win32_to_host(struct conversion_context *ctx, const VkDrmFormatModifierPropertiesEXT32 *in, uint32_t count)
+{
+    VkDrmFormatModifierPropertiesEXT *out;
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+
+    return out;
+}
+
+static inline void convert_VkDrmFormatModifierPropertiesEXT_array_host_to_win32(const VkDrmFormatModifierPropertiesEXT *in, VkDrmFormatModifierPropertiesEXT32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDrmFormatModifierPropertiesEXT_host_to_win32(&in[i], &out[i]);
+    }
+}
+
+static inline void convert_VkDrmFormatModifierProperties2EXT_host_to_win32(const VkDrmFormatModifierProperties2EXT *in, VkDrmFormatModifierProperties2EXT32 *out)
+{
+    if (!in) return;
+
+    out->drmFormatModifier = in->drmFormatModifier;
+    out->drmFormatModifierPlaneCount = in->drmFormatModifierPlaneCount;
+    out->drmFormatModifierTilingFeatures = in->drmFormatModifierTilingFeatures;
+}
+
+static inline VkDrmFormatModifierProperties2EXT *convert_VkDrmFormatModifierProperties2EXT_array_win32_to_host(struct conversion_context *ctx, const VkDrmFormatModifierProperties2EXT32 *in, uint32_t count)
+{
+    VkDrmFormatModifierProperties2EXT *out;
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+
+    return out;
+}
+
+static inline void convert_VkDrmFormatModifierProperties2EXT_array_host_to_win32(const VkDrmFormatModifierProperties2EXT *in, VkDrmFormatModifierProperties2EXT32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDrmFormatModifierProperties2EXT_host_to_win32(&in[i], &out[i]);
+    }
+}
+
 static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_context *ctx, const VkFormatProperties232 *in, VkFormatProperties2 *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -33756,6 +33965,17 @@ static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_c
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT:
+        {
+            VkDrmFormatModifierPropertiesListEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDrmFormatModifierPropertiesListEXT32 *in_ext = (const VkDrmFormatModifierPropertiesListEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT;
+            out_ext->pNext = NULL;
+            out_ext->pDrmFormatModifierProperties = convert_VkDrmFormatModifierPropertiesEXT_array_win32_to_host(ctx, (VkDrmFormatModifierPropertiesEXT32 *)UlongToPtr(in_ext->pDrmFormatModifierProperties), in_ext->drmFormatModifierCount);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT:
         {
             VkSubpassResolvePerformanceQueryEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -33770,6 +33990,17 @@ static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_c
             VkFormatProperties3 *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3;
             out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT:
+        {
+            VkDrmFormatModifierPropertiesList2EXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDrmFormatModifierPropertiesList2EXT32 *in_ext = (const VkDrmFormatModifierPropertiesList2EXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT;
+            out_ext->pNext = NULL;
+            out_ext->pDrmFormatModifierProperties = convert_VkDrmFormatModifierProperties2EXT_array_win32_to_host(ctx, (VkDrmFormatModifierProperties2EXT32 *)UlongToPtr(in_ext->pDrmFormatModifierProperties), in_ext->drmFormatModifierCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -33805,6 +34036,16 @@ static inline void convert_VkFormatProperties2_host_to_win32(const VkFormatPrope
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT:
+        {
+            VkDrmFormatModifierPropertiesListEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
+            const VkDrmFormatModifierPropertiesListEXT *in_ext = (const VkDrmFormatModifierPropertiesListEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT;
+            out_ext->drmFormatModifierCount = in_ext->drmFormatModifierCount;
+            convert_VkDrmFormatModifierPropertiesEXT_array_host_to_win32(in_ext->pDrmFormatModifierProperties, (VkDrmFormatModifierPropertiesEXT32 *)UlongToPtr(out_ext->pDrmFormatModifierProperties), in_ext->drmFormatModifierCount);
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT:
         {
             VkSubpassResolvePerformanceQueryEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT);
@@ -33822,6 +34063,16 @@ static inline void convert_VkFormatProperties2_host_to_win32(const VkFormatPrope
             out_ext->linearTilingFeatures = in_ext->linearTilingFeatures;
             out_ext->optimalTilingFeatures = in_ext->optimalTilingFeatures;
             out_ext->bufferFeatures = in_ext->bufferFeatures;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT:
+        {
+            VkDrmFormatModifierPropertiesList2EXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT);
+            const VkDrmFormatModifierPropertiesList2EXT *in_ext = (const VkDrmFormatModifierPropertiesList2EXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT;
+            out_ext->drmFormatModifierCount = in_ext->drmFormatModifierCount;
+            convert_VkDrmFormatModifierProperties2EXT_array_host_to_win32(in_ext->pDrmFormatModifierProperties, (VkDrmFormatModifierProperties2EXT32 *)UlongToPtr(out_ext->pDrmFormatModifierProperties), in_ext->drmFormatModifierCount);
             out_header = (void *)out_ext;
             break;
         }
@@ -33927,6 +34178,20 @@ static inline void convert_VkPhysicalDeviceImageFormatInfo2_win64_to_host(struct
             out_ext->pNext = NULL;
             out_ext->viewFormatCount = in_ext->viewFormatCount;
             out_ext->pViewFormats = in_ext->pViewFormats;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT:
+        {
+            VkPhysicalDeviceImageDrmFormatModifierInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageDrmFormatModifierInfoEXT *in_ext = (const VkPhysicalDeviceImageDrmFormatModifierInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->drmFormatModifier = in_ext->drmFormatModifier;
+            out_ext->sharingMode = in_ext->sharingMode;
+            out_ext->queueFamilyIndexCount = in_ext->queueFamilyIndexCount;
+            out_ext->pQueueFamilyIndices = in_ext->pQueueFamilyIndices;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -34046,6 +34311,20 @@ static inline void convert_VkPhysicalDeviceImageFormatInfo2_win32_to_host(struct
             out_ext->pNext = NULL;
             out_ext->viewFormatCount = in_ext->viewFormatCount;
             out_ext->pViewFormats = UlongToPtr(in_ext->pViewFormats);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT:
+        {
+            VkPhysicalDeviceImageDrmFormatModifierInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageDrmFormatModifierInfoEXT32 *in_ext = (const VkPhysicalDeviceImageDrmFormatModifierInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->drmFormatModifier = in_ext->drmFormatModifier;
+            out_ext->sharingMode = in_ext->sharingMode;
+            out_ext->queueFamilyIndexCount = in_ext->queueFamilyIndexCount;
+            out_ext->pQueueFamilyIndices = UlongToPtr(in_ext->pQueueFamilyIndices);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -53101,6 +53380,37 @@ static NTSTATUS thunk32_vkGetGeneratedCommandsMemoryRequirementsNV(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetImageDrmFormatModifierPropertiesEXT(void *args)
+{
+    struct vkGetImageDrmFormatModifierPropertiesEXT_params *params = args;
+
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pProperties);
+
+    params->result = vulkan_device_from_handle(params->device)->p_vkGetImageDrmFormatModifierPropertiesEXT(vulkan_device_from_handle(params->device)->host.device, params->image, params->pProperties);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetImageDrmFormatModifierPropertiesEXT(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        PTR32 pProperties;
+        VkResult result;
+    } *params = args;
+    VkImageDrmFormatModifierPropertiesEXT pProperties_host;
+
+    TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->image), params->pProperties);
+
+    convert_VkImageDrmFormatModifierPropertiesEXT_win32_to_host((VkImageDrmFormatModifierPropertiesEXT32 *)UlongToPtr(params->pProperties), &pProperties_host);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetImageDrmFormatModifierPropertiesEXT(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->image, &pProperties_host);
+    convert_VkImageDrmFormatModifierPropertiesEXT_host_to_win32(&pProperties_host, (VkImageDrmFormatModifierPropertiesEXT32 *)UlongToPtr(params->pProperties));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetImageMemoryRequirements(void *args)
 {
     struct vkGetImageMemoryRequirements_params *params = args;
@@ -58714,6 +59024,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_extended_dynamic_state2",
     "VK_EXT_extended_dynamic_state3",
     "VK_EXT_external_memory_acquire_unmodified",
+    "VK_EXT_external_memory_dma_buf",
     "VK_EXT_external_memory_host",
     "VK_EXT_filter_cubic",
     "VK_EXT_fragment_density_map",
@@ -58730,6 +59041,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_image_2d_view_of_3d",
     "VK_EXT_image_compression_control",
     "VK_EXT_image_compression_control_swapchain",
+    "VK_EXT_image_drm_format_modifier",
     "VK_EXT_image_robustness",
     "VK_EXT_image_sliced_view_of_3d",
     "VK_EXT_image_view_min_lod",
@@ -59548,6 +59860,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetFramebufferTilePropertiesQCOM,
     thunk64_vkGetGeneratedCommandsMemoryRequirementsEXT,
     thunk64_vkGetGeneratedCommandsMemoryRequirementsNV,
+    thunk64_vkGetImageDrmFormatModifierPropertiesEXT,
     thunk64_vkGetImageMemoryRequirements,
     thunk64_vkGetImageMemoryRequirements2,
     thunk64_vkGetImageMemoryRequirements2KHR,
@@ -60205,6 +60518,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetFramebufferTilePropertiesQCOM,
     thunk32_vkGetGeneratedCommandsMemoryRequirementsEXT,
     thunk32_vkGetGeneratedCommandsMemoryRequirementsNV,
+    thunk32_vkGetImageDrmFormatModifierPropertiesEXT,
     thunk32_vkGetImageMemoryRequirements,
     thunk32_vkGetImageMemoryRequirements2,
     thunk32_vkGetImageMemoryRequirements2KHR,

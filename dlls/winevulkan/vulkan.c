@@ -1511,8 +1511,8 @@ static inline void wine_vk_normalize_handle_types_host(VkExternalMemoryHandleTyp
     *types &=
         VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT |
         VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT |
-/*      predicated on VK_KHR_external_memory_dma_buf
-        VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT | */
+/*      predicated on VK_KHR_external_memory_dma_buf */
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT |
         VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT;
 }
 
@@ -1530,7 +1530,7 @@ static void wine_vk_get_physical_device_external_buffer_properties(struct wine_p
 
     wine_vk_normalize_handle_types_win(&buffer_info_dup.handleType);
     if (buffer_info_dup.handleType & wine_vk_handle_over_fd_types)
-        buffer_info_dup.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+        buffer_info_dup.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
     wine_vk_normalize_handle_types_host(&buffer_info_dup.handleType);
 
     if (buffer_info->handleType && !buffer_info_dup.handleType)
@@ -1541,11 +1541,11 @@ static void wine_vk_get_physical_device_external_buffer_properties(struct wine_p
 
     p_vkGetPhysicalDeviceExternalBufferProperties(phys_dev->obj.host.physical_device, &buffer_info_dup, properties);
 
-    if (properties->externalMemoryProperties.exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+    if ((properties->externalMemoryProperties.exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) || (properties->externalMemoryProperties.exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT))
         properties->externalMemoryProperties.exportFromImportedHandleTypes |= wine_vk_handle_over_fd_types;
     wine_vk_normalize_handle_types_win(&properties->externalMemoryProperties.exportFromImportedHandleTypes);
 
-    if (properties->externalMemoryProperties.compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+    if ((properties->externalMemoryProperties.compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) || (properties->externalMemoryProperties.compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT))
         properties->externalMemoryProperties.compatibleHandleTypes |= wine_vk_handle_over_fd_types;
     wine_vk_normalize_handle_types_win(&properties->externalMemoryProperties.compatibleHandleTypes);
 }
@@ -1597,12 +1597,14 @@ static VkResult wine_vk_get_physical_device_image_format_properties_2(struct win
                                                       VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
     {
         VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
+        TRACE("Memory Property %d\n", p->exportFromImportedHandleTypes);
+        TRACE("Memory Property %d\n", p->compatibleHandleTypes);
 
-        if (p->exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+        if ((p->exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) || (p->exportFromImportedHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT))
             p->exportFromImportedHandleTypes |= wine_vk_handle_over_fd_types;
         wine_vk_normalize_handle_types_win(&p->exportFromImportedHandleTypes);
 
-        if (p->compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+        if ((p->compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) || (p->compatibleHandleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT))
             p->compatibleHandleTypes |= wine_vk_handle_over_fd_types;
         wine_vk_normalize_handle_types_win(&p->compatibleHandleTypes);
     }
@@ -1906,13 +1908,15 @@ struct shared_resource_create
 {
     UINT64 resource_size;
     obj_handle_t unix_handle;
+    obj_handle_t dma_handle;
     WCHAR name[1];
 };
 
-static HANDLE create_gpu_resource(int fd, LPCWSTR name, UINT64 resource_size)
+static HANDLE create_gpu_resource(int fd, int dma_fd, LPCWSTR name, UINT64 resource_size)
 {
     static const WCHAR shared_gpu_resourceW[] = {'\\','?','?','\\','S','h','a','r','e','d','G','p','u','R','e','s','o','u','r','c','e',0};
     HANDLE unix_resource = INVALID_HANDLE_VALUE;
+    HANDLE dma_resource = INVALID_HANDLE_VALUE;
     struct shared_resource_create *inbuff;
     UNICODE_STRING shared_gpu_resource_us;
     HANDLE shared_resource;
@@ -1923,8 +1927,14 @@ static HANDLE create_gpu_resource(int fd, LPCWSTR name, UINT64 resource_size)
 
     TRACE("Creating shared vulkan resource fd %d name %s.\n", fd, debugstr_w(name));
 
-    if (wine_server_fd_to_handle(fd, GENERIC_ALL, 0, &unix_resource) != STATUS_SUCCESS)
+    if (wine_server_fd_to_handle(fd, GENERIC_ALL, 0, &unix_resource) != STATUS_SUCCESS) {
         return INVALID_HANDLE_VALUE;
+    }
+    if (wine_server_fd_to_handle(dma_fd, GENERIC_ALL, 0, &dma_resource) != STATUS_SUCCESS) {
+        ERR("Failed to save the dma handle");
+        NtClose(unix_resource);
+        return INVALID_HANDLE_VALUE;
+    }
 
     init_unicode_string(&shared_gpu_resource_us, shared_gpu_resourceW);
 
@@ -1935,25 +1945,26 @@ static HANDLE create_gpu_resource(int fd, LPCWSTR name, UINT64 resource_size)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if ((status = NtCreateFile(&shared_resource, GENERIC_READ | GENERIC_WRITE, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0)))
-    {
+    if((status = NtCreateFile(&shared_resource, GENERIC_READ | GENERIC_WRITE, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0))) {
         ERR("Failed to load open a shared resource handle, status %#lx.\n", (long int)status);
         NtClose(unix_resource);
+        NtClose(dma_resource);
         return INVALID_HANDLE_VALUE;
     }
 
     in_size = sizeof(*inbuff) + (name ? lstrlenW(name) * sizeof(WCHAR) : 0);
     inbuff = calloc(1, in_size);
     inbuff->unix_handle = wine_server_obj_handle(unix_resource);
+    inbuff->dma_handle = wine_server_obj_handle(dma_resource);
     inbuff->resource_size = resource_size;
     if (name)
         lstrcpyW(&inbuff->name[0], name);
 
-    if ((status = NtDeviceIoControlFile(shared_resource, NULL, NULL, NULL, &iosb, IOCTL_SHARED_GPU_RESOURCE_CREATE,
-            inbuff, in_size, NULL, 0)))
+    status = NtDeviceIoControlFile(shared_resource, NULL, NULL, NULL, &iosb, IOCTL_SHARED_GPU_RESOURCE_CREATE, inbuff, in_size, NULL, 0);
 
     free(inbuff);
     NtClose(unix_resource);
+    NtClose(dma_resource);
 
     if (status)
     {
@@ -2112,7 +2123,7 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
     {
         memory->handle_types = export_info->handleTypes;
         if (export_info->handleTypes & wine_vk_handle_over_fd_types)
-            export_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+            export_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT | VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
         wine_vk_normalize_handle_types_host(&export_info->handleTypes);
     }
 
@@ -2258,6 +2269,18 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
     result = device->p_vkAllocateMemory(device->host.device, &info, NULL, &host_device_memory);
     if (result == VK_SUCCESS && memory->handle == INVALID_HANDLE_VALUE && export_info && export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
     {
+        int dma_fd;
+        get_fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+        get_fd_info.pNext = NULL;
+        get_fd_info.memory = host_device_memory;
+        get_fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+
+        if (device->p_vkGetMemoryFdKHR(device->host.device, &get_fd_info, &dma_fd) != VK_SUCCESS) {
+            TRACE("GetMemoryFD for dma handle failed\n");
+            goto export_done;
+        }
+        TRACE("Retrieved the DMA_BUF fd %d\n", dma_fd);
+
         get_fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
         get_fd_info.pNext = NULL;
         get_fd_info.memory = host_device_memory;
@@ -2265,15 +2288,19 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
 
         if (device->p_vkGetMemoryFdKHR(device->host.device, &get_fd_info, &fd) == VK_SUCCESS)
         {
-            memory->handle = create_gpu_resource(fd, handle_export_info ? handle_export_info->name : NULL, alloc_info->allocationSize);
+            memory->handle = create_gpu_resource(fd, dma_fd, handle_export_info ? handle_export_info->name : NULL, alloc_info->allocationSize);
             memory->access = handle_export_info ? handle_export_info->dwAccess : GENERIC_ALL;
             if (handle_export_info && handle_export_info->pAttributes)
                 memory->inherit = handle_export_info->pAttributes->bInheritHandle;
             else
                 memory->inherit = FALSE;
             close(fd);
+        } else {
+            ERR("Failed to save the opaque handle\n");
         }
+        close(dma_fd);
 
+export_done:
         if (memory->handle == INVALID_HANDLE_VALUE)
         {
             device->p_vkFreeMemory(device->host.device, host_device_memory, NULL);
@@ -2485,7 +2512,7 @@ VkResult wine_vkCreateBuffer(VkDevice client_device, const VkBufferCreateInfo *c
     if ((ext_info = wine_vk_find_struct(create_info, EXTERNAL_MEMORY_BUFFER_CREATE_INFO)))
     {
         if (ext_info->handleTypes & wine_vk_handle_over_fd_types)
-            ext_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+            ext_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT | VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
         wine_vk_normalize_handle_types_host(&ext_info->handleTypes);
     }
     else if (physical_device->external_memory_align &&
@@ -2511,7 +2538,7 @@ VkResult wine_vkCreateImage(VkDevice client_device, const VkImageCreateInfo *cre
     if ((update_info = find_next_struct(info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO)))
     {
         if (update_info->handleTypes & wine_vk_handle_over_fd_types)
-            update_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+            update_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
         wine_vk_normalize_handle_types_host(&update_info->handleTypes);
     }
     else if (physical_device->external_memory_align)
@@ -2827,6 +2854,7 @@ VkResult wine_vkGetMemoryWin32HandleKHR(VkDevice device, const VkMemoryGetWin32H
 VkResult wine_vkGetMemoryWin32HandlePropertiesKHR(VkDevice device_handle, VkExternalMemoryHandleTypeFlagBits type, HANDLE handle, VkMemoryWin32HandlePropertiesKHR *properties)
 {
     struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->obj.physical_device, struct wine_phys_dev, obj);
     unsigned int i;
 
     TRACE("%p %u %p %p\n", device, type, handle, properties);
@@ -2838,8 +2866,8 @@ VkResult wine_vkGetMemoryWin32HandlePropertiesKHR(VkDevice device_handle, VkExte
     }
 
     properties->memoryTypeBits = 0;
-    for (i = 0; i < device->phys_dev->memory_properties.memoryTypeCount; ++i)
-        if (device->phys_dev->memory_properties.memoryTypes[i].propertyFlags == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    for (i = 0; i < physical_device->memory_properties.memoryTypeCount; ++i)
+        if (physical_device->memory_properties.memoryTypes[i].propertyFlags == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
             properties->memoryTypeBits |= 1u << i;
 
     return VK_SUCCESS;
@@ -2856,7 +2884,7 @@ VkResult wine_vkCreateSemaphore(VkDevice device_handle, const VkSemaphoreCreateI
     if ((export_semaphore_info = wine_vk_find_struct(create_info, EXPORT_SEMAPHORE_CREATE_INFO)))
     {
         if (export_semaphore_info->handleTypes & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT)
-            export_semaphore_info->handleTypes |= VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
+            export_semaphore_info->handleTypes |= VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT | VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
         wine_vk_normalize_semaphore_handle_types_host(&export_semaphore_info->handleTypes);
     }
 

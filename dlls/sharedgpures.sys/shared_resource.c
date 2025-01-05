@@ -22,6 +22,7 @@ struct shared_resource
 {
     unsigned int ref_count;
     void *unix_resource;
+    void *dma_resource;
     WCHAR *name;
     void *metadata;
     SIZE_T metadata_size;
@@ -75,6 +76,7 @@ struct shared_resource_create
 {
     UINT64 resource_size;
     obj_handle_t unix_handle;
+    obj_handle_t dma_handle;
     WCHAR name[1];
 };
 
@@ -82,6 +84,7 @@ static NTSTATUS shared_resource_create(struct shared_resource **res, void *buff,
 {
     struct shared_resource_create *input = buff;
     void *unix_resource;
+    void *dma_resource;
     unsigned int i;
     LPWSTR name;
 
@@ -92,6 +95,9 @@ static NTSTATUS shared_resource_create(struct shared_resource **res, void *buff,
         return STATUS_INVALID_PARAMETER;
 
     if (!(unix_resource = reference_client_handle(input->unix_handle)))
+        return STATUS_INVALID_HANDLE;
+
+    if (!(dma_resource = reference_client_handle(input->dma_handle)))
         return STATUS_INVALID_HANDLE;
 
     if (insize == sizeof(*input))
@@ -126,6 +132,7 @@ static NTSTATUS shared_resource_create(struct shared_resource **res, void *buff,
     *res = &resource_pool[i];
     (*res)->ref_count = 1;
     (*res)->unix_resource = unix_resource;
+    (*res)->dma_resource = dma_resource;
     (*res)->name = name;
     (*res)->resource_size = input->resource_size;
 
@@ -163,6 +170,7 @@ static NTSTATUS shared_resource_open(struct shared_resource **res, void *buff, S
 
     if (input->kmt_handle)
     {
+        ERR("Looking up kmt handle %d, sailor\n", input->kmt_handle);
         if (kmt_to_index(input->kmt_handle) >= resource_pool_size)
             return STATUS_INVALID_HANDLE;
 
@@ -203,7 +211,9 @@ static NTSTATUS shared_resource_getkmt(struct shared_resource *res, void *buff, 
     if (outsize < sizeof(unsigned int))
         return STATUS_INFO_LENGTH_MISMATCH;
 
+
     *((unsigned int *)buff) = index_to_kmt(res - resource_pool);
+    ERR("Get KMT handle %d for %p in pool at %p\n", *(unsigned int*)buff, res, resource_pool);
 
     iosb->Information = sizeof(unsigned int);
     return STATUS_SUCCESS;
@@ -242,6 +252,19 @@ static obj_handle_t open_client_handle(void *object)
     NtClose(kernel_handle);
 
     return wine_server_obj_handle(handle);
+}
+
+#define IOCTL_SHARED_GPU_RESOURCE_GET_DMA_RESOURCE           CTL_CODE(FILE_DEVICE_VIDEO, 8, METHOD_BUFFERED, FILE_READ_ACCESS)
+
+static NTSTATUS shared_resource_get_dma_resource(struct shared_resource *res, void *buff, SIZE_T outsize, IO_STATUS_BLOCK *iosb)
+{
+    if (outsize < sizeof(obj_handle_t))
+        return STATUS_INFO_LENGTH_MISMATCH;
+
+    *((obj_handle_t *)buff) = open_client_handle(res->dma_resource);
+
+    iosb->Information = sizeof(obj_handle_t);
+    return STATUS_SUCCESS;
 }
 
 #define IOCTL_SHARED_GPU_RESOURCE_GET_UNIX_RESOURCE           CTL_CODE(FILE_DEVICE_VIDEO, 3, METHOD_BUFFERED, FILE_READ_ACCESS)
@@ -374,18 +397,25 @@ static NTSTATUS WINAPI dispatch_close(DEVICE_OBJECT *device, IRP *irp)
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     struct shared_resource *res = &resource_pool[ (UINT_PTR) stack->FileObject->FsContext ];
 
-    TRACE("Freeing shared resouce %p.\n", res);
+    TRACE("Close shared resouce %p.\n", res);
 
     if (res)
     {
         res->ref_count--;
         if (!res->ref_count)
         {
+            TRACE("Refcount hit 0 for %p\n", res);
             if (res->unix_resource)
             {
                 /* TODO: see if its possible to destroy the object here (unlink?) */
                 ObDereferenceObject(res->unix_resource);
                 res->unix_resource = NULL;
+            }
+            if (res->dma_resource)
+            {
+                /* TODO: see if its possible to destroy the object here (unlink?) */
+                ObDereferenceObject(res->dma_resource);
+                res->dma_resource = NULL;
             }
             if (res->metadata)
             {
@@ -445,6 +475,12 @@ static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_SHARED_GPU_RESOURCE_GET_UNIX_RESOURCE:
             status = shared_resource_get_unix_resource( res,
+                                      irp->AssociatedIrp.SystemBuffer,
+                                      stack->Parameters.DeviceIoControl.OutputBufferLength,
+                                      &irp->IoStatus );
+            break;
+        case IOCTL_SHARED_GPU_RESOURCE_GET_DMA_RESOURCE:
+            status = shared_resource_get_dma_resource( res,
                                       irp->AssociatedIrp.SystemBuffer,
                                       stack->Parameters.DeviceIoControl.OutputBufferLength,
                                       &irp->IoStatus );
